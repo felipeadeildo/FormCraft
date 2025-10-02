@@ -29,7 +29,7 @@ Aplicação POC que permite criar formulários com linguagem natural e responder
 
 - ✅ **Criar formulários:** Descreva em linguagem natural, gere JSON Schema automaticamente
 - ✅ **Edge Functions:** `generate-schema` e `nlu-map` deployadas
-- ✅ **Autenticação:** Magic Link e GitHub OAuth
+- ✅ **Autenticação:** Magic Link
 - ✅ **UI:** shadcn/ui com Tailwind CSS
 - ✅ **Banco:** Supabase Postgres com RLS
 
