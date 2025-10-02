@@ -11,7 +11,7 @@ import { FormFactory, type FormSchema } from "~/components/form/FormFactory";
 import { supabase } from "~/lib/supabaseClient";
 import { toast } from "sonner";
 import { Link } from "react-router";
-import { Eye } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -38,6 +38,7 @@ export default function Home() {
   const [loadingForms, setLoadingForms] = useState(false);
   const [myForms, setMyForms] = useState<PublicForm[]>([]);
   const [loadingMyForms, setLoadingMyForms] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPublicForms();
@@ -172,6 +173,38 @@ export default function Home() {
     }
   };
 
+  const onDeleteForm = async (id: string) => {
+    const confirmDelete = window.confirm("Tem certeza que deseja apagar este formulário? Esta ação não pode ser desfeita.");
+    if (!confirmDelete) return;
+
+    setDeletingId(id);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Você precisa estar logado.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('forms')
+        .delete()
+        .eq('id', id)
+        .eq('owner_id', user.id);
+
+      if (error) throw error;
+
+      toast.success("Formulário apagado.");
+      // Refresh lists
+      fetchMyForms();
+      fetchPublicForms();
+    } catch (error) {
+      console.error('Error deleting form:', error);
+      toast.error("Erro ao apagar formulário");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <main className="container mx-auto p-4">
       <Tabs defaultValue="create" className="w-full">
@@ -246,6 +279,15 @@ export default function Home() {
                               Respostas
                             </Button>
                           </Link>
+                          <Button 
+                            size="sm" 
+                            variant="destructive" 
+                            onClick={() => onDeleteForm(form.id)}
+                            disabled={deletingId === form.id}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            {deletingId === form.id ? 'Apagando...' : 'Apagar'}
+                          </Button>
                         </div>
                       </div>
                     </Card>
