@@ -1,10 +1,14 @@
 import { Button } from "~/components/ui/button";
 import { supabase } from "~/lib/supabaseClient";
 import { useState, useEffect } from "react";
+import { Input } from "~/components/ui/input";
 
 export function AuthBar() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -23,14 +27,23 @@ export function AuthBar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleSignIn = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-    if (error) console.error('Error signing in:', error);
+  const handleSendMagicLink = async () => {
+    if (!email) return;
+    setSending(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+      setSent(true);
+    } catch (err) {
+      console.error('Error sending magic link:', err);
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -54,9 +67,17 @@ export function AuthBar() {
             </Button>
           </>
         ) : (
-          <Button size="sm" onClick={handleSignIn}>
-            Entrar com GitHub
-          </Button>
+          <div className="flex items-center gap-2">
+            <Input
+              type="email"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Button size="sm" onClick={handleSendMagicLink} disabled={!email || sending}>
+              {sending ? 'Enviando...' : sent ? 'Reenviar' : 'Enviar Magic Link'}
+            </Button>
+          </div>
         )}
       </div>
     </div>
